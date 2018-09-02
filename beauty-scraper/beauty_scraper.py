@@ -16,7 +16,7 @@ class BeautyScraper(object):
     __metaclass__ = ABCMeta
     @abstractmethod
     def get_category_urls(self):
-        '''Return category start urls as a dict
+        '''Provide category start urls and its name
         Example:
         return {"http://www.iyi8.com/hot/": "hot",
         "http://www.iyi8.com/photo/mm/":"mm",
@@ -29,46 +29,58 @@ class BeautyScraper(object):
 
     @abstractmethod
     def get_page_url(self, index, first_url):
-        '''Return page url with index based on first_url
-        Example:
-        first_url : "http://www.iyi8.com/star"
-        other page url with index 3: "http://www.iyi8.com/star/3.html"
+        '''Provide page url with index based on first_url.
+        e.g.:
+        index 0 (first_url): "http://www.iyi8.com/star"
+        index 3: "http://www.iyi8.com/star/3.html"
         '''
         pass
 
     @abstractmethod
     def get_download_folder_path(self):
-        '''Return path for download folder name
-        beauty_scraper will create a folder located at the returned path for downloaded images.
+        '''Provide path for download folder name.
+        beauty_scraper will create a folder located at the provided path for downloaded images.
         The path is relatived to current module path.
-        Example:
+        e.g.:
         return "downloads"
         '''
         pass
 
     @abstractmethod
     def get_downloaded_list_name(self, category):
-        '''Return name for downloaded list file
-        Example:
+        '''Provide name for downloaded list file.
+        This file is used to check whether a image has been downloaded.
+        e.g.:
         return "iyi8_" + category + ".txt"
         '''
         pass
 
     @abstractmethod
     def get_image_tags_on_page(self, soup):
-        '''Return image html tag that contain image url'''
+        '''Provide image html tag that contain image url
+        e.g.:
+        return soup.find_all("div", class_="item")
+        '''
         pass
 
     @abstractmethod
     def get_image_page_url(self, index, first_url):
-        '''Return image page url based on first_url and index
-        like "http://www.iyi8.com/2017/mm_1225/2928_3.html"
+        '''Provide image page url based on first_url and index
+        e.g.:
+        index 0 (first_url): "http://www.iyi8.com/2017/mm_1225/2928.html"
+        index 3: "http://www.iyi8.com/2017/mm_1225/2928_3.html"
         '''
         pass
 
     @abstractmethod
     def get_image_info(self, soup):
-        '''Retrun image url and image name'''
+        '''Find image url and image name in soup
+        e.g.:
+        (sometimes you can locate the parent element of 'img' tag first)
+        parent = soup.find("div", class_="tupian")
+        img_url = parent.a.img['src']
+        file_name = parent.a.img['alt']
+        '''
         pass
 
     def download_images(self, multi_thread=False):
@@ -86,8 +98,11 @@ class BeautyScraper(object):
     def _download_images_category(self, first_url, category):
         '''Download images of specific category'''
         DIR_NAME = self.get_download_folder_path()
-        if not os.path.exists(DIR_NAME):
-            os.makedirs(DIR_NAME)
+        try:
+            if not os.path.exists(DIR_NAME):
+                os.makedirs(DIR_NAME)
+        except:
+            pass
         # download images from every page
         MAX_PAGE = 1000
         for page_index in range(MAX_PAGE):
@@ -131,4 +146,5 @@ class BeautyScraper(object):
         path = self.get_download_folder_path()
         category_dir = path + "/" + category + "/"
         bsUtil.download(img_url, file_name, file_name + "_" + str(index) + ".jpg", category_dir)
+        # to avoid IP banned, you can use a better strategy
         time.sleep(10)
